@@ -1,0 +1,31 @@
+{
+  "name": "osint",
+  "owner": {
+    "name": "IPedrax"
+  },
+  "metadata": {
+    "description": "Self-hosted marketplace for the osint investigation toolkit."
+  },
+  "plugins": [
+    {
+      "name": "osint",
+      "source": "./",
+      "version": "0.3.0",
+      "description": "Methodology-and-tradecraft OSINT investigation toolkit with evidence discipline, confidence grading, and an authorization gate. Passive by default; active collection requires recorded authorization.",
+      "author": {
+        "name": "IPedrax"
+      },
+      "category": "security",
+      "tags": [
+        "osint",
+        "threat-intelligence",
+        "investigation",
+        "due-diligence",
+        "kyc",
+        "aml",
+        "journalism",
+        "self-audit"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "osint",
+  "version": "0.3.0",
+  "description": "Methodology-and-tradecraft OSINT investigation toolkit with evidence discipline, confidence grading, and an authorization gate. Passive by default; active collection requires recorded authorization.",
+  "author": {
+    "name": "IPedrax"
+  },
+  "keywords": [
+    "osint",
+    "threat-intelligence",
+    "investigation",
+    "due-diligence",
+    "kyc",
+    "aml",
+    "journalism",
+    "self-audit",
+    "evidence",
+    "tradecraft"
+  ]
+}

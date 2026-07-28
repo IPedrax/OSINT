@@ -1,0 +1,18 @@
+{
+  "description": "Surfaces an open OSINT case when a session starts or resumes, so work never continues without the frozen scope in view. Read-only, and silent when no case is open. It blocks nothing.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/case_status.py"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

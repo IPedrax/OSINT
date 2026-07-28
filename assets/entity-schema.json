@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:osint:case-record:1",
+  "title": "OSINT case-file record",
+  "description": "One record from a case directory. Validate every line of ledger.jsonl, entities.jsonl and events.jsonl against this file, plus every finding object in a machine-readable report export. Field names are fixed by CONTRACT.md section 7, selector types by section 4, grades and estimative wording by section 6. inference_rung is an addition made by the case-file machinery: it is the ladder rung the record sits on. It is required on a finding and optional on an entity or event, because CONTRACT.md section 7 does not list it for entities.jsonl or events.jsonl and a record written exactly to that section must stay valid. CONTRACT.md section 7 lists key names, not a closed field set; nothing here renames or drops a key it specifies. Field-name mapping from a findings.md block to the finding object, which is the only place the two vocabularies differ: rung -> inference_rung, answers -> scope_question, entities -> entity_refs, disconfirms -> disconfirming_evidence, alternatives -> alternatives_rejected, source_grade -> reliability, and the literal estimative token 'none' -> null.",
+  "oneOf": [
+    { "$ref": "#/$defs/ledger" },
+    { "$ref": "#/$defs/entity" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/finding" }
+  ],
+  "$defs": {
+    "timestamp": {
+      "$anchor": "timestamp",
+      "type": "string",
+      "description": "ISO 8601 instant, UTC, trailing Z. Optional fractional seconds. No local offsets: a case that spans jurisdictions must not carry ambiguous times.",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$",
+      "examples": ["2026-07-28T09:14:02Z", "2026-07-28T09:14:02.481Z"]
+    },
+    "partial_timestamp": {
+      "$anchor": "partial_timestamp",
+      "type": "string",
+      "description": "Event time. Either a reduced-precision date (YYYY, YYYY-MM, YYYY-MM-DD), a full UTC instant, or an ISO 8601 interval of two of those joined by '/'. Reduced precision must be matched by the precision field, not padded with fake zeros.",
+      "pattern": "^[0-9]{4}(-[0-9]{2}(-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z)?)?)?(/[0-9]{4}(-[0-9]{2}(-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z)?)?)?)?$",
+      "examples": ["2019", "2023-04", "2024-11-30", "2026-07-28T09:14:02Z", "2024-11-30/2024-12-02"]
+    },
+    "sha256": {
+      "$anchor": "sha256",
+      "type": "string",
+      "description": "Lowercase hex sha256 of the archived byte stream in evidence/. 64 chars.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "grade": {
+      "$anchor": "grade",
+      "type": "string",
+      "description": "Admiralty grade. First character grades the SOURCE (A completely reliable, B usually reliable, C fairly reliable, D not usually reliable, E unreliable, F cannot be judged). Second character grades the CLAIM (1 confirmed by independent sources, 2 probably true, 3 possibly true, 4 doubtful, 5 improbable, 6 cannot be judged). The two are graded separately: an A source can carry a 3 claim, and an F source can carry a 1 claim if independent corroboration exists.",
+      "enum": [
+        "A1", "A2", "A3", "A4", "A5", "A6",
+        "B1", "B2", "B3", "B4", "B5", "B6",
+        "C1", "C2", "C3", "C4", "C5", "C6",
+        "D1", "D2", "D3", "D4", "D5", "D6",
+        "E1", "E2", "E3", "E4", "E5", "E6",
+        "F1", "F2", "F3", "F4", "F5", "F6"
+      ]
+    },
+    "selector_type": {
+      "$anchor": "selector_type",
+      "type": "string",
+      "description": "Canonical selector vocabulary, CONTRACT.md section 4. Exact strings only. No synonyms, no plurals. Adding a type requires amending CONTRACT.md section 4 first, then this enum.",
+      "enum": [
+        "email",
+        "username",
+        "person_name",
+        "phone",
+        "domain",
+        "subdomain",
+        "ip",
+        "asn",
+        "netblock",
+        "url",
+        "ssl_cert",
+        "company",
+        "company_number",
+        "address",
+        "photo",
+        "video",
+        "document",
+        "crypto_address",
+        "tx_hash",
+        "vehicle_plate",
+        "vessel",
+        "aircraft",
+        "coordinates",
+        "file_hash",
+        "social_profile",
+        "breach_record"
+      ]
+    },
+    "inference_rung": {
+      "$anchor": "inference_rung",
+      "type": "string",
+      "description": "How far the record sits from something actually retrieved. Ordered strongest to weakest, and canonical in references/41-confidence.md's inference ladder. observed: the value appears verbatim in an artifact archived in evidence/. reported: a source asserts it and the underlying artifact was not retrieved. correlated: two or more independently retrieved artifacts agree on a named linking datapoint. inferred: no source states it; it follows from pattern, structure, timing or absence, plus one stated assumption with its falsifier. speculated: a hypothesis with no evidentiary weight; may not appear in findings.md, only gaps.md; graded F6.",
+      "enum": ["observed", "reported", "correlated", "inferred", "speculated"]
+    },
+    "estimative": {
+      "$anchor": "estimative",
+      "description": "ICD 203 estimative wording, CONTRACT.md section 6. Exactly these seven phrases or null. null means the claim is not probabilistic (a record was retrieved, a filing exists, a certificate was issued). The findings.md block writes the literal token 'none' for the null case; the exporter maps 'none' -> null. Never substitute a synonym, a percentage, or 'confirmed'.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "almost no chance",
+            "very unlikely",
+            "unlikely",
+            "roughly even chance",
+            "likely",
+            "very likely",
+            "almost certain"
+          ]
+        },
+        { "type": "null" }
+      ]
+    },
+    "mode": {
+      "$anchor": "mode",
+      "type": "string",
+      "description": "passive: the target cannot observe the collection. active: the target or a third party can observe it, or state changes. CONTRACT.md section 9.",
+      "enum": ["passive", "active"]
+    },
+    "entity_ref": {
+      "$anchor": "entity_ref",
+      "type": "string",
+      "description": "Reference to an entities.jsonl id.",
+      "pattern": "^e-[0-9]+$"
+    },
+    "ledger": {
+      "$anchor": "ledger",
+      "title": "ledger.jsonl line",
+      "description": "Append-only action log. One line per thing done, written at the moment it is done, including refusals and dead ends. Never rewritten, never reordered, never deduplicated. This file is what makes parallel collectors safe and the case resumable.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "actor", "action", "source", "query", "result", "result_sha256", "mode"],
+      "properties": {
+        "ts": { "$ref": "#/$defs/timestamp", "description": "When the action completed." },
+        "actor": {
+          "type": "string",
+          "description": "'main' for the primary session, or the subagent name, e.g. 'osint-collector'. Free-form beyond that so a human analyst can be named.",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "description": "scope: intake recorded. collect: a source was queried. pivot: a selector produced a new selector. archive: a snapshot was stored in evidence/. finding: a block was written to findings.md. refusal: a request was declined, with the reason in result.",
+          "enum": ["scope", "collect", "pivot", "archive", "finding", "refusal"]
+        },
+        "source": {
+          "type": "string",
+          "description": "sources.csv name column verbatim, or the tool name (WebFetch, WebSearch, Bash, firecrawl_search). 'n/a' for scope and refusal rows.",
+          "minLength": 1
+        },
+        "query": {
+          "type": "string",
+          "description": "Exactly what was asked, verbatim where possible: the URL, the dork string, the registry number. Someone else must be able to re-run it from this field alone.",
+          "minLength": 1
+        },
+        "result": {
+          "type": "string",
+          "description": "One-line summary, or the literal string 'none' for a negative result. Negative results are mandatory: they are what stops re-work and what makes absence of evidence reportable. Refusal rows put the refusal reason here. For an action:'finding' row, result starts with the finding id and a colon: 'f-3: <one-line summary>'. That is the only link between the ledger and findings.md.",
+          "minLength": 1
+        },
+        "result_sha256": {
+          "oneOf": [
+            { "$ref": "#/$defs/sha256" },
+            { "type": "null" }
+          ],
+          "description": "sha256 of the archived copy in evidence/, or null when nothing was archived (negative result, refusal, scope)."
+        },
+        "mode": { "$ref": "#/$defs/mode" }
+      }
+    },
+    "entity": {
+      "$anchor": "entity",
+      "title": "entities.jsonl line",
+      "description": "One selector value believed to exist. An entity is a thing observed, not a conclusion about who it belongs to; attribution lives in findings, not here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "value", "first_seen", "grade", "sources", "candidate_group", "notes"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable within the case. Never reused, never renumbered after a merge; a superseded entity keeps its id and gains a note.",
+          "pattern": "^e-[0-9]+$"
+        },
+        "type": { "$ref": "#/$defs/selector_type" },
+        "value": {
+          "type": "string",
+          "description": "Normalized value: lowercase for domain, email and username; E.164 for phone; checksummed form for crypto_address; decimal degrees for coordinates. Store the raw form in notes if normalization lost information.",
+          "minLength": 1
+        },
+        "first_seen": { "$ref": "#/$defs/timestamp", "description": "When this case first recorded the value. Not when the value came into existence in the world." },
+        "grade": { "$ref": "#/$defs/grade" },
+        "inference_rung": { "$ref": "#/$defs/inference_rung" },
+        "sources": {
+          "type": "array",
+          "description": "One or more ledger ts values or URLs. Empty is invalid: an entity with no provenance does not exist.",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "candidate_group": {
+          "description": "Identity-confusion guard. Two entities that MIGHT be the same real-world thing share a group id and are never merged without a named linking datapoint recorded in notes. null means no ambiguity was found, which is a claim in itself.",
+          "oneOf": [
+            { "type": "string", "pattern": "^cg-[0-9]+$" },
+            { "type": "null" }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free text. For a candidate_group member, name the datapoint that would resolve or break the link. May be an empty string.",
+          "default": ""
+        },
+        "attributed_to": {
+          "description": "Optional. The entity this one is believed to belong to, e.g. an email attributed to a person_name. Populating this is an attribution claim and requires a matching finding.",
+          "oneOf": [
+            { "$ref": "#/$defs/entity_ref" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "event": {
+      "$anchor": "event",
+      "title": "events.jsonl line",
+      "description": "Something that happened at a time, tied to an entity. Timeline rows come from here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "actor_entity", "description", "grade", "sources", "precision"],
+      "properties": {
+        "ts": { "$ref": "#/$defs/partial_timestamp", "description": "When the event happened, at the precision actually known. Must agree with the precision field." },
+        "actor_entity": { "$ref": "#/$defs/entity_ref", "description": "The entity the event is about." },
+        "description": {
+          "type": "string",
+          "description": "One sentence, past tense, no interpretation. 'Certificate issued for mail.example.com', not 'attacker prepared phishing infrastructure'.",
+          "minLength": 1
+        },
+        "grade": { "$ref": "#/$defs/grade" },
+        "inference_rung": { "$ref": "#/$defs/inference_rung" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "precision": {
+          "type": "string",
+          "description": "How exact ts is. exact: to the second, from a timestamped record. day / month / year: that is all the source gave. approx: derived (sun angle, foliage, sequence position) and never to be rendered as a precise time in a report.",
+          "enum": ["exact", "day", "month", "year", "approx"]
+        },
+        "timezone_note": {
+          "type": "string",
+          "description": "Optional. Where the source's clock came from and what was assumed converting it to UTC. Populate whenever ts was converted."
+        }
+      }
+    },
+    "finding_source": {
+      "$anchor": "finding_source",
+      "title": "Source citation inside a finding",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_name", "url", "retrieved", "sha256", "reliability"],
+      "properties": {
+        "source_name": {
+          "type": "string",
+          "description": "sources.csv name column verbatim, or the tool name.",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "description": "The exact URL retrieved. For offline or in-person material, a stable identifier plus 'offline:' prefix.",
+          "minLength": 1
+        },
+        "retrieved": { "$ref": "#/$defs/timestamp" },
+        "sha256": {
+          "oneOf": [
+            { "$ref": "#/$defs/sha256" },
+            { "type": "null" }
+          ],
+          "description": "Hash of the archived copy in evidence/. null only where archiving was impossible, and then archive_note must say why."
+        },
+        "archive_note": {
+          "type": "string",
+          "description": "Required in practice when sha256 is null: why no snapshot exists, and any third-party archive URL that does."
+        },
+        "mode": { "$ref": "#/$defs/mode", "description": "Optional per source. findings.md records mode once on the finding, not per source; populate this only when one source in a multi-source finding was collected in the other mode." },
+        "reliability": {
+          "type": "string",
+          "description": "Admiralty source letter for this one source. Written as source_grade in a findings.md block. The finding's grade letter is the weakest letter among its sources unless independent corroboration justifies better, in which case say so in the finding.",
+          "enum": ["A", "B", "C", "D", "E", "F"]
+        }
+      }
+    },
+    "finding": {
+      "$anchor": "finding",
+      "title": "Finding record",
+      "description": "The machine-readable form of one findings.md block, and the unit of the report JSON export. Not a JSONL file in the skeleton: findings live in findings.md as prose and are exported to this shape when a report is compiled.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "claim", "grade", "inference_rung", "estimative", "mode", "sources", "reasoning", "disconfirming_evidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable within the case. Lowercase and unpadded: f-1, f-14. Cited in the report and in ledger rows with action 'finding', where result starts with the id and a colon.",
+          "pattern": "^f-[0-9]+$"
+        },
+        "mode": { "$ref": "#/$defs/mode" },
+        "reasoning": {
+          "type": "string",
+          "description": "Two or three sentences: how the sources get to the claim. Names the linking datapoint for an identity or attribution claim, and the stated assumption plus its falsifier for an inferred one.",
+          "minLength": 1
+        },
+        "claim": {
+          "type": "string",
+          "description": "One sentence. One claim. If it needs 'and', it is two findings.",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        "grade": { "$ref": "#/$defs/grade" },
+        "inference_rung": { "$ref": "#/$defs/inference_rung" },
+        "estimative": { "$ref": "#/$defs/estimative" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/finding_source" }
+        },
+        "disconfirming_evidence": {
+          "type": "string",
+          "description": "What observation would make this finding wrong, stated concretely enough to go looking for it. 'Nothing could disconfirm this' is not an acceptable value; if it is true, the claim is not a finding.",
+          "minLength": 1
+        },
+        "entity_refs": {
+          "type": "array",
+          "description": "Entities the finding is about.",
+          "items": { "$ref": "#/$defs/entity_ref" }
+        },
+        "event_refs": {
+          "type": "array",
+          "description": "events.jsonl ts values the finding rests on.",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "scope_question": {
+          "type": "string",
+          "description": "Which scope.md question this answers. A finding that answers none of them is scope creep and belongs in gaps.md, not the report."
+        },
+        "alternatives_rejected": {
+          "type": "array",
+          "description": "Competing explanations considered, each with the reason it was rejected.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hypothesis", "why_rejected"],
+            "properties": {
+              "hypothesis": { "type": "string", "minLength": 1 },
+              "why_rejected": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "handling": {
+          "type": "string",
+          "description": "Redaction state as delivered. none: printed in full. partial: identifiers masked in the body, full values held in the case dir only. withheld: the finding exists and is cited by id, but its content is not in this deliverable.",
+          "enum": ["none", "partial", "withheld"]
+        }
+      }
+    }
+  }
+}
