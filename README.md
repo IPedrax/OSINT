@@ -1,6 +1,6 @@
 <div align="center">
   <img src="assets/icons/radar.svg" width="56" alt="" />
-  <h1>osint</h1>
+  <h1>OSINT</h1>
   <p><strong>An open-source-intelligence toolkit for Claude Code that turns a search session into a defensible case file — sourced, timestamped, hashed and graded, or it does not enter the report.</strong></p>
 </div>
 
@@ -28,11 +28,11 @@ Built for **Claude Code** (Windows / macOS / Linux).
 The repository is its own marketplace. The command is the same on Windows, macOS and Linux — this is the `claude` CLI, not a shell script:
 
 ```
-claude plugin marketplace add IPedrax/osint
+claude plugin marketplace add IPedrax/OSINT
 claude plugin install osint@osint
 ```
 
-Verified against Claude Code **2.1.71**. Inside a running session the same thing is `/plugin marketplace add IPedrax/osint` then `/plugin install osint@osint`.
+Verified against Claude Code **2.1.71**. Inside a running session the same thing is `/plugin marketplace add IPedrax/OSINT` then `/plugin install osint@osint`.
 
 ### <img src="assets/icons/terminal.svg" width="17" align="absmiddle" alt="" /> From a local clone
 
@@ -50,7 +50,7 @@ Any absolute or relative path to the clone works — `./osint`, `~/src/osint`, `
 Python **3.11+** on `PATH` (`py -3` works on Windows). No third-party Python packages, no API keys, no network access at import time. `claude plugin list --json` shows what the installed copy actually ships.
 
 > **Prefer to let Claude install it?** Paste this into a new chat:
-> *"Install this Claude Code plugin for me from https://github.com/IPedrax/osint and walk me through anything you need."*
+> *"Install this Claude Code plugin for me from https://github.com/IPedrax/OSINT and walk me through anything you need."*
 
 ---
 
