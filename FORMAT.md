@@ -162,9 +162,11 @@ own catalog. Verified in three working installs: `[ECC]`, `[PT]`, `[AAS]`.
 - Version resolution order for the *effective* version: `plugin.json` `version`, then marketplace
   entry `version`, then git commit SHA, then `unknown` `[PM]`. But the **pre-install** listing reads
   the marketplace entry only: with no `version` there, `claude plugin list --json --available`
-  reports `version: null` for this plugin even though `plugin.json` sets `0.1.0`; adding it to the
-  entry makes the listing report `0.1.0` `[CLI]`. Both manifests therefore carry the version, and
-  **both must be bumped together** on every release.
+  reports `version: null` for this plugin even though `plugin.json` sets a version; adding it to
+  the entry makes the listing report that version `[CLI]`. Observed during Phase 0, when both
+  manifests read `0.1.0`; the shipped version is whatever `.claude-plugin/plugin.json` currently
+  declares. Both manifests carry the version, and **both must be bumped together** on every
+  release.
 - Relative-path sources do **not** resolve if a user adds the marketplace by direct URL to the
   `marketplace.json` file, because only that file is downloaded. Git-source or local-directory
   adds work `[PM]`.
@@ -453,7 +455,7 @@ component inventory and projected token cost `[PR]` — but that subcommand **do
 `marketplace.json` and never mentions `plugin.json`, so a broken `plugin.json` passes unnoticed.
 To check the plugin manifest, copy it to a scratch directory that has no `marketplace.json` and
 validate that `[CLI]`. Both manifests in this repo pass, and the entry resolves as
-`osint | ./ | 0.1.0` `[CLI]`.
+`osint | ./ | <version>` `[CLI]` — observed as `0.1.0` when this was written in Phase 0.
 
 ### 8.1 Installed version is behind the docs
 
