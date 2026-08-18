@@ -129,3 +129,6 @@ Full details: [`skills/osint/SKILL.md`](skills/osint/SKILL.md) · authoring rule
 ## <img src="assets/icons/file.svg" width="20" align="absmiddle" alt="" /> License
 
 [MIT](LICENSE) — grading scales follow the Admiralty/NATO system and [ICD 203](https://www.dni.gov/files/documents/ICD/ICD%20203%20Analytic%20Standards.pdf); the source registry cites third-party services under their own terms.
+---
+
+Built by [Pedro Medeiros](https://ipedrax.com.br). I build production LLM applications for companies too: multi-provider backends, the infrastructure under them, and the billing on top. Available for contract work, remote from Brazil on US hours. [pedro.medeiros@ipedrax.com.br](mailto:pedro.medeiros@ipedrax.com.br)
